@@ -1,4 +1,4 @@
-from app.auth.password import hash_password
+from auth.password import hash_password
 from app.auth.password import verify_password
 
 password = "123456"
