@@ -5,9 +5,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.complaint import Complaint
 from app.models.user import User
-from app.schemas.complaint import ComplaintCreate
+from app.schemas.complaint import ComplaintCreate, ComplaintUpdate
 from app.auth.dependencies import get_current_user
-from typing import Dict,Any
+from typing import Dict, Any
+
+
+
 
 router = APIRouter(
 prefix="/complaints",
@@ -42,14 +45,13 @@ def create_complaint(
     db.add(new_complaint)
     db.commit()
     db.refresh(new_complaint)
-    user.point += 10
+    user.points += 10
     db.commit()
     
-    return 
-    {
-    "message": "Complaint Created",
-    "points_earned": 10,
-    "complaint_id": new_complaint.id
+    return {
+        "message": "Complaint Created",
+        "points_earned": 10,
+        "complaint_id": new_complaint.id
     }
 
 
@@ -86,3 +88,50 @@ def get_complaint(
     )
 
     return complaint
+
+@router.put("/{complaint_id}")
+def update_complaint(
+    complaint_id:int,
+    updated_data: ComplaintUpdate,
+    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] =
+    Depends(get_current_user)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(
+            status_code=404,
+            detail="Complaint not found"
+        )
+    complaint_obj: Any = complaint
+    complaint_obj.title = updated_data.title
+    complaint_obj.description = updated_data.description
+    complaint_obj.category = updated_data.category
+    complaint_obj.location = updated_data.location
+    db.commit()
+    db.refresh(complaint)
+    return {
+        "message": "Complaint Updated",
+    }
+
+@router.delete("/{complaint_id}")
+def delete_complaint(
+    complaint_id:int,
+    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] =
+    Depends(get_current_user)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(
+            status_code=404,
+            detail="Complaint not found"
+        )
+    db.delete(complaint)
+    db.commit()
+    return {
+        "message": "Complaint Deleted"
+    }
+
+
+

@@ -26,3 +26,13 @@ class ComplaintCreate(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ComplaintUpdate(BaseModel):
+
+    title: str
+
+    description: str
+
+    category: str
+
+    location:str       
