@@ -47,7 +47,42 @@ def create_complaint(
     
     return 
     {
-            "message": "Complaint Created",
-            "points_earned": 10,
-            "complaint_id": new_complaint.id
+    "message": "Complaint Created",
+    "points_earned": 10,
+    "complaint_id": new_complaint.id
     }
+
+
+@router.get("/")
+def get_complaints(
+   db: Session = Depends(get_db),
+   current_user: Dict[str, Any] = 
+   Depends(get_current_user)
+):
+    complaints = db.query(
+    Complaint
+).filter(
+    Complaint.user_id == current_user["id"]
+).all()
+    return complaints
+
+@router.get("/{complaint_id}")
+def get_complaint(
+   complaint_id:int,
+   db: Session = Depends(get_db),
+   current_user: Dict[str, Any] =
+   Depends(get_current_user)
+):
+    complaint = db.query(
+    Complaint
+).filter(
+    Complaint.id == complaint_id
+).first()
+    
+    if not complaint:
+     raise HTTPException(
+        status_code=404,
+        detail="Complaint not found"
+    )
+
+    return complaint
