@@ -1,15 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import UploadFile
+from fastapi import File
+from app.services.cloudinary import upload_image
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.complaint import Complaint
 from app.models.user import User
-from app.schemas.complaint import ComplaintCreate, ComplaintUpdate
+from app.schemas.complaint import ComplaintUpdate
 from app.auth.dependencies import get_current_user
 from typing import Dict, Any
-
-
+import os
 
 
 router = APIRouter(
@@ -19,11 +21,24 @@ tags=["Complaints"]
 
 @router.post("/")
 def create_complaint(
-    complaint: ComplaintCreate,
+    title: str = Form(...),
+    description: str = Form(...),
+    category: str = Form(...),
+    location: str = Form(...),
+    image: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: Dict[str,Any] =
-    Depends(get_current_user)
+    current_user: Dict[str,Any] =Depends(get_current_user)
 ):
+
+    temp_file = f"temp_{image.filename}"
+
+    with open(temp_file, "wb") as buffer:
+        buffer.write(image.file.read())
+    
+    image_url = upload_image(temp_file)
+    
+    os.remove(temp_file)
+
     
     user = db.query(User).filter(
         User.id == current_user["id"]
@@ -35,21 +50,32 @@ def create_complaint(
             detail ="User not found"
         )
     
+
+
+
+    
     new_complaint = Complaint(
-            title=complaint.title,
-            description=complaint.description,
-            category=complaint.category,
-            location=complaint.location,
-            user_id= user.id
+        title=title,
+        description=description,
+        category=category,
+        location=location,
+        image_url=image_url,
+        user_id=current_user["id"]
     )
+
+
     db.add(new_complaint)
     db.commit()
     db.refresh(new_complaint)
+    
     user.points += 10
     db.commit()
     
+
+
     return {
         "message": "Complaint Created",
+        "image_url": image_url,
         "points_earned": 10,
         "complaint_id": new_complaint.id
     }

@@ -1,14 +1,17 @@
+from fastapi import File, Form, UploadFile
 from pydantic import BaseModel
 
 class ComplaintCreate(BaseModel):
 
-    title: str
+    title: str = Form(...)
 
-    description: str
+    description: str = Form(...)
 
-    category: str
+    category: str = Form(...)
 
-    location: str
+    location: str = Form(...)
+
+    image: UploadFile = File(...)
 
     class ComplaintResponse(BaseModel):
 
