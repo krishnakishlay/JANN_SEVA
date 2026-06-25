@@ -4,6 +4,7 @@ from app.database import Base
 from app.routes.auth import router as auth_router
 from app.routes.admin import router as admin_router
 from app.routes import complaint
+from app.routes import admin
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,6 +18,9 @@ app.include_router(
 )
 app.include_router(
     complaint.router
+)
+app.include_router(
+    admin.router
 )
 
 @app.get("/")
